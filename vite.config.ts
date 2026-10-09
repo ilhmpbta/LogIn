@@ -54,6 +54,9 @@ export default defineConfig({
             'resources/js/routes/**',
             'resources/js/wayfinder/**',
         ],
+        rules: {
+            'unicorn/no-empty-file': 'off',
+        },
         options: {
             denyWarnings: true,
             typeAware: true,
