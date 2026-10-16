@@ -69,12 +69,10 @@ const props = defineProps<{
 
                 <div
                     v-if="event.actor"
-                    class="text-muted-foreground pt-1 font-mono text-[11px]"
+                    class="pt-1 font-mono text-[11px] text-muted-foreground"
                 >
                     Actor:
-                    <span class="text-foreground">{{
-                        event.actor
-                    }}</span>
+                    <span class="text-foreground">{{ event.actor }}</span>
                 </div>
             </div>
         </div>
