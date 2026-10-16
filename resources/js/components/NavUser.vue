@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
+import { useTypedPage } from '@/composables/useTypedPage';
 import { ChevronsUpDown } from '@lucide/vue';
 import { computed } from 'vue';
 import {
@@ -15,14 +15,17 @@ import {
 } from '@/components/ui/sidebar';
 import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import type { User } from '@/types';
 
-const page = usePage();
-const user = computed(() => page.props.auth.user);
+const page = useTypedPage();
+const user = computed(() =>
+    page.props.auth.user ? (page.props.auth.user as User) : null,
+);
 const { isMobile, state } = useSidebar();
 </script>
 
 <template>
-    <SidebarMenu>
+    <SidebarMenu v-if="user">
         <SidebarMenuItem>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
