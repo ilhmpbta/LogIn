@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import SocLogoIcon from '@/components/soc/SocLogoIcon.vue'
+import SocLogoIcon from '@/components/soc/SocLogoIcon.vue';
 import { home } from '@/routes';
 
 defineProps<{
