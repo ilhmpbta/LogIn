@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
+import { useTypedPage } from '@/composables/useTypedPage';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
 
@@ -11,7 +11,7 @@ withDefaults(defineProps<Props>(), {
     variant: 'sidebar',
 });
 
-const isOpen = usePage().props.sidebarOpen;
+const isOpen = useTypedPage().props.sidebarOpen;
 </script>
 
 <template>

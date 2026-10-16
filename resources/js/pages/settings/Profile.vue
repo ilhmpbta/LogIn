@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useTypedPage } from '@/composables/useTypedPage';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
@@ -14,17 +14,12 @@ import { send } from '@/routes/verification';
 
 defineOptions({
     layout: {
-        breadcrumbs: [
-            {
-                title: 'Profile settings',
-                href: edit(),
-            },
-        ],
+        breadcrumbs: [{ title: 'Profile settings', href: edit() }],
     },
 });
 
-const page = usePage();
-const user = computed(() => page.props.auth.user);
+const page = useTypedPage();
+const user = computed(() => page.props.auth.user!);
 </script>
 
 <template>
@@ -42,7 +37,7 @@ const user = computed(() => page.props.auth.user);
         <Form
             v-bind="ProfileController.update.form()"
             class="space-y-6"
-            v-slot="{ errors, processing }"
+            v-slot="{ errors, processing, recentlySuccessful }"
         >
             <div class="grid gap-2">
                 <Label for="name">Name</Label>
@@ -73,7 +68,7 @@ const user = computed(() => page.props.auth.user);
                 <InputError class="mt-2" :message="errors.email" />
             </div>
 
-            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
+            <div v-if="user.email_verified_at === null">
                 <p class="-mt-4 text-sm text-muted-foreground">
                     Your email address is unverified.
                     <Link
@@ -87,16 +82,33 @@ const user = computed(() => page.props.auth.user);
 
                 <div
                     v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
+                    class="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400"
                 >
                     A new verification link has been sent to your email address.
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
-                <Button :disabled="processing" data-test="update-profile-button"
-                    >Save</Button
+                <Button
+                    :disabled="processing"
+                    data-test="update-profile-button"
                 >
+                    Save
+                </Button>
+
+                <Transition
+                    enter-active-class="transition ease-in-out"
+                    enter-from-class="opacity-0"
+                    leave-active-class="transition ease-in-out"
+                    leave-to-class="opacity-0"
+                >
+                    <p
+                        v-if="recentlySuccessful"
+                        class="text-sm text-muted-foreground"
+                    >
+                        Saved.
+                    </p>
+                </Transition>
             </div>
         </Form>
     </div>
