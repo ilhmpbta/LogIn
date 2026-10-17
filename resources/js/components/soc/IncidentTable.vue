@@ -10,6 +10,7 @@ import {
     type SortingState,
 } from '@tanstack/vue-table';
 import { router } from '@inertiajs/vue3';
+import { Skeleton } from '@/components/ui/skeleton';
 import SeverityBadge from './SeverityBadge.vue';
 import IncidentBadge from './IncidentBadge.vue';
 import type {
@@ -26,9 +27,11 @@ const props = withDefaults(
     defineProps<{
         incidents: IncidentItem[];
         pageSize?: number;
+        loading?: boolean;
     }>(),
     {
         pageSize: 10,
+        loading: false,
     },
 );
 
@@ -189,7 +192,27 @@ function handleRowClick(incident: IncidentItem): void {
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border text-xs">
-                    <template v-if="table.getRowModel().rows.length > 0">
+                    <template v-if="loading">
+                        <tr v-for="i in pageSize" :key="`skel-${i}`">
+                            <td
+                                v-for="(_, idx) in columns"
+                                :key="idx"
+                                class="px-4 py-3"
+                            >
+                                <Skeleton
+                                    class="h-4"
+                                    :class="
+                                        idx === columns.length - 1
+                                            ? 'w-24'
+                                            : idx === 1
+                                              ? 'w-32'
+                                              : 'w-20'
+                                    "
+                                />
+                            </td>
+                        </tr>
+                    </template>
+                    <template v-else-if="table.getRowModel().rows.length > 0">
                         <tr
                             v-for="row in table.getRowModel().rows"
                             :key="row.id"
@@ -224,6 +247,7 @@ function handleRowClick(incident: IncidentItem): void {
 
         <!-- Pagination Controls -->
         <div
+            v-if="!loading && props.incidents.length > 0"
             class="flex items-center justify-between border-t border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground"
         >
             <div>

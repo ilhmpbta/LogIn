@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { LucideIcon } from '@lucide/vue';
 import { computed } from 'vue';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const props = withDefaults(
     defineProps<{
@@ -11,10 +12,12 @@ const props = withDefaults(
         icon?: LucideIcon;
         description?: string;
         variant?: 'default' | 'danger' | 'warning' | 'success';
+        loading?: boolean;
     }>(),
     {
         trend: 'neutral',
         variant: 'default',
+        loading: false,
     },
 );
 
@@ -47,11 +50,15 @@ const variantClasses = computed(() => {
             <component :is="icon" v-if="icon" class="h-4 w-4 opacity-75" />
         </div>
         <div class="flex items-baseline justify-between">
-            <div class="text-2xl font-bold tracking-tight text-foreground">
+            <Skeleton v-if="loading" class="h-7 w-20" />
+            <div
+                v-else
+                class="text-2xl font-bold tracking-tight text-foreground"
+            >
                 {{ value }}
             </div>
             <div
-                v-if="change !== undefined"
+                v-if="!loading && change !== undefined"
                 class="flex items-center text-xs font-semibold"
                 :class="{
                     'text-emerald-600 dark:text-emerald-400':

@@ -6,7 +6,11 @@ import IncidentTable, {
 import { Search } from '@lucide/vue';
 import { useSocChannel } from '@/composables/useSocChannel';
 
-const { incidents } = useSocChannel({ maxIncidents: 100 });
+const { incidents, logs } = useSocChannel({ maxIncidents: 100 });
+
+// Cold-mount loading — flips to false once the stream emits its first log.
+// `logs` is module-level, so this only fires on the very first visit.
+const isLoading = computed(() => logs.value.length === 0);
 
 const searchQuery = ref('');
 const selectedSeverity = ref<string>('ALL');
@@ -102,6 +106,6 @@ const filteredIncidents = computed(() => {
         </div>
 
         <!-- Incidents Table -->
-        <IncidentTable :incidents="filteredIncidents" />
+        <IncidentTable :incidents="filteredIncidents" :loading="isLoading" />
     </div>
 </template>

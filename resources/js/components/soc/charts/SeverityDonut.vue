@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
+import { ShieldCheck } from '@lucide/vue';
 import { SEVERITY_STYLES } from '@/lib/soc/severity';
 import type { Severity } from '@/types/soc';
 import { useAppearance } from '@/composables/useAppearance';
@@ -11,6 +12,14 @@ const props = defineProps<{
 
 const { resolvedAppearance } = useAppearance();
 const isDark = computed(() => resolvedAppearance.value === 'dark');
+
+const total = computed(
+    () =>
+        (props.data.CRITICAL || 0) +
+        (props.data.HIGH || 0) +
+        (props.data.MEDIUM || 0) +
+        (props.data.LOW || 0),
+);
 
 const series = computed(() => [
     props.data.CRITICAL || 0,
@@ -86,7 +95,21 @@ const chartOptions = computed(
             >
         </div>
         <div class="flex h-64 w-full items-center justify-center">
+            <div v-if="total === 0" class="text-center">
+                <div
+                    class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted"
+                >
+                    <ShieldCheck class="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p class="text-sm font-medium text-foreground">
+                    No incidents detected
+                </p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                    Severity distribution will appear as threats are identified
+                </p>
+            </div>
             <VueApexCharts
+                v-else
                 type="donut"
                 height="240"
                 :options="chartOptions"
