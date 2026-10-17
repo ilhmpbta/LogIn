@@ -19,12 +19,15 @@ import {
     Volume2,
     VolumeX,
 } from '@lucide/vue';
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { demoMode, toggleDemoMode } from '@/composables/useDemoMode';
 import { useTypedPage } from '@/composables/useTypedPage';
 import { useIncidentAlerts } from '@/composables/useIncidentAlerts';
 import { useAlertSound } from '@/composables/useAlertSound';
+import { isCollapsed, toggleSidebar } from '@/composables/useSidebarCollapse';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import CommandPalette from '@/components/soc/CommandPalette.vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -42,6 +45,7 @@ import { logout } from '@/routes';
 
 // Call useIncidentAlerts once at setup scope
 useIncidentAlerts();
+const { paletteOpen } = useKeyboardShortcuts();
 
 const { isMuted, toggleMute } = useAlertSound();
 
@@ -50,20 +54,6 @@ const currentUrl = computed(() => page.url);
 const authUser = computed(() => page.props.auth.user);
 
 const { appearance, updateAppearance } = useAppearance();
-
-const isCollapsed = ref(false);
-
-onMounted(() => {
-    const stored = localStorage.getItem('soc-sidebar-collapsed');
-    if (stored !== null) {
-        isCollapsed.value = stored === 'true';
-    }
-});
-
-function toggleSidebar() {
-    isCollapsed.value = !isCollapsed.value;
-    localStorage.setItem('soc-sidebar-collapsed', String(isCollapsed.value));
-}
 
 const navItems = [
     { label: 'SOC Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -81,6 +71,8 @@ function handleLogout() {
     <div
         class="flex h-screen bg-background font-sans text-foreground antialiased transition-colors"
     >
+        <CommandPalette v-model:open="paletteOpen" />
+
         <!-- Sidebar -->
         <aside
             class="flex shrink-0 flex-col justify-between border-r border-border bg-card/80 backdrop-blur-md transition-all duration-300"
