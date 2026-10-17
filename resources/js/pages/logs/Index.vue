@@ -80,7 +80,7 @@ const filteredLogs = computed(() => {
                     <option value="ALL">All Log Types</option>
                     <option value="auth_log">auth_log</option>
                     <option value="network_log">network_log</option>
-                    <option value="logs">logs</option>
+                    <option value="system_log">system_log</option>
                     <option value="application_log">application_log</option>
                     <option value="firewall_log">firewall_log</option>
                 </select>
