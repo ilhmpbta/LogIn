@@ -149,7 +149,7 @@ const renderedArcs = computed<IncidentArc[]>(() => {
             </div>
             <div class="flex items-center gap-2">
                 <span
-                    class="h-2 w-2 animate-ping rounded-full bg-emerald-500"
+                    class="h-2 w-2 animate-ping rounded-full bg-emerald-500 motion-reduce:animate-none"
                 />
                 <span
                     class="font-mono text-[10px] text-muted-foreground uppercase"
@@ -170,7 +170,7 @@ const renderedArcs = computed<IncidentArc[]>(() => {
             <!-- Skeleton / Loading State -->
             <div
                 v-else-if="!worldData"
-                class="h-full w-full animate-pulse bg-muted/40"
+                class="h-full w-full animate-pulse bg-muted/40 motion-reduce:animate-none"
             />
 
             <!-- Loaded SVG Map -->

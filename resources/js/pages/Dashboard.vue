@@ -16,6 +16,11 @@ const { logs, incidents, paused } = useSocChannel({
     maxIncidents: 50,
 });
 
+// True only during the very first mount, before the stream has emitted
+// its first log. `logs` is a module-level singleton that survives Inertia
+// navigation, so this never re-triggers after the first successful load.
+const isLoading = computed(() => logs.value.length === 0);
+
 const incidentItems = computed<IncidentItem[]>(() =>
     incidents.value.map((inc) => ({
         ...inc,
@@ -29,10 +34,6 @@ const severityDistribution = computed(() => {
         if (inc.severity in dist) {
             dist[inc.severity]++;
         }
-    }
-    // Fallback/baseline if empty so charts look alive
-    if (incidents.value.length === 0) {
-        return { CRITICAL: 1, HIGH: 3, MEDIUM: 5, LOW: 10 };
     }
     return dist;
 });
@@ -50,6 +51,7 @@ const severityDistribution = computed(() => {
                 variant="danger"
                 :icon="ShieldAlert"
                 description="Requiring agent intervention"
+                :loading="isLoading"
             />
             <MetricCard
                 title="Log Ingestion Rate"
@@ -59,6 +61,7 @@ const severityDistribution = computed(() => {
                 variant="success"
                 :icon="Activity"
                 description="Real-time Reverb / Sim stream"
+                :loading="isLoading"
             />
             <MetricCard
                 title="Protected Servers"
@@ -68,6 +71,7 @@ const severityDistribution = computed(() => {
                 variant="default"
                 :icon="Server"
                 description="All nodes reporting healthy"
+                :loading="isLoading"
             />
             <MetricCard
                 title="AI Agent Mitigations"
@@ -77,6 +81,7 @@ const severityDistribution = computed(() => {
                 variant="default"
                 :icon="Zap"
                 description="Automated playbook execution"
+                :loading="isLoading"
             />
         </div>
 
@@ -104,7 +109,7 @@ const severityDistribution = computed(() => {
                         >
                     </div>
                     <span
-                        class="h-2 w-2 animate-ping rounded-full bg-emerald-500"
+                        class="h-2 w-2 animate-ping rounded-full bg-emerald-500 motion-reduce:animate-none"
                     />
                 </div>
                 <div
@@ -123,7 +128,10 @@ const severityDistribution = computed(() => {
                         Recent Security Incidents
                     </h2>
                 </div>
-                <IncidentTable :incidents="incidentItems" />
+                <IncidentTable
+                    :incidents="incidentItems"
+                    :loading="isLoading"
+                />
             </div>
         </div>
     </div>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useThrottleFn } from '@vueuse/core';
 import VueApexCharts from 'vue3-apexcharts';
+import { Activity } from '@lucide/vue';
 import type { NormalizedLog } from '@/types/soc';
 import { useAppearance } from '@/composables/useAppearance';
 
@@ -8,12 +10,24 @@ const props = defineProps<{
     logs: NormalizedLog[];
 }>();
 
+const throttledLogs = ref<NormalizedLog[]>(props.logs);
+
+const updateThrottledLogs = useThrottleFn((next: NormalizedLog[]) => {
+    throttledLogs.value = next;
+}, 500);
+
+watch(
+    () => props.logs,
+    (next) => updateThrottledLogs(next),
+    { deep: false },
+);
+
 const { resolvedAppearance } = useAppearance();
 const isDark = computed(() => resolvedAppearance.value === 'dark');
 
 const chartData = computed(() => {
     const counts: Record<string, number> = {};
-    for (const log of props.logs) {
+    for (const log of throttledLogs.value) {
         if (!log.timestamp) continue;
         const timeKey = log.timestamp.slice(0, 19);
         counts[timeKey] = (counts[timeKey] || 0) + 1;
@@ -99,8 +113,22 @@ const chartOptions = computed(
                 >Live</span
             >
         </div>
-        <div class="h-64 w-full">
+        <div class="flex h-64 w-full items-center justify-center">
+            <div v-if="props.logs.length === 0" class="text-center">
+                <div
+                    class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted"
+                >
+                    <Activity class="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p class="text-sm font-medium text-foreground">
+                    Waiting for log data
+                </p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                    Ingestion metrics will populate as logs flow in
+                </p>
+            </div>
             <VueApexCharts
+                v-else
                 type="area"
                 height="240"
                 :options="chartOptions"
