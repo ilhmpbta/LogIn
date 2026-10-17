@@ -25,10 +25,7 @@ const { incidents } = useSocChannel();
 const { status: streamStatus } = useIncidentStream(props.incidentId);
 
 const matchedIncident = computed(() =>
-    incidents.value.find(
-        (inc) =>
-            inc.incident_id === props.incidentId
-    ),
+    incidents.value.find((inc) => inc.incident_id === props.incidentId),
 );
 
 const incidentTitle = computed(

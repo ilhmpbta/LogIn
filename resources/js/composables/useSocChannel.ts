@@ -13,9 +13,7 @@ interface LogIngestedPayload {
 }
 
 export interface UseSocChannelOptions {
-    /** Berapa banyak log yang disimpan di memory. Sisanya di-drop (FIFO). */
     maxLogs?: number;
-    /** Berapa banyak incident terbaru yang disimpan. */
     maxIncidents?: number;
 }
 
@@ -23,21 +21,20 @@ export interface UseSocChannelReturn {
     logs: Ref<NormalizedLog[]>;
     incidents: Ref<IncidentTriggeredData[]>;
     isConnected: Ref<boolean>;
-    /** True kalau user menekan tombol Pause di terminal viewer. */
     paused: Ref<boolean>;
     togglePause: () => void;
     clearLogs: () => void;
 }
+
+const logs = ref<NormalizedLog[]>([]);
+const incidents = ref<IncidentTriggeredData[]>([]);
+const paused = ref(false);
 
 export function useSocChannel(
     options: UseSocChannelOptions = {},
 ): UseSocChannelReturn {
     const maxLogs = options.maxLogs ?? 5_000;
     const maxIncidents = options.maxIncidents ?? 100;
-
-    const logs = ref<NormalizedLog[]>([]);
-    const incidents = ref<IncidentTriggeredData[]>([]);
-    const paused = ref(false);
 
     const { echo, isConnected: echoIsConnected } = useEcho();
     const simulation = useAttackSimulation();
