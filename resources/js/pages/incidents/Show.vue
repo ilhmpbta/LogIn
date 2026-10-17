@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AgentThoughtStream from '@/components/soc/AgentThoughtStream.vue';
 import IncidentTimeline from '@/components/soc/IncidentTimeline.vue';
 import ApprovalDialog from '@/components/soc/ApprovalDialog.vue';
@@ -7,6 +7,8 @@ import SeverityBadge from '@/components/soc/SeverityBadge.vue';
 import IncidentBadge from '@/components/soc/IncidentBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Bot, Clock } from '@lucide/vue';
+import { useSocChannel } from '@/composables/useSocChannel';
+import { useIncidentStream } from '@/composables/useIncidentStream';
 
 const props = withDefaults(
     defineProps<{
@@ -19,43 +21,66 @@ const props = withDefaults(
 
 const approvalOpen = ref(false);
 
-const mockTimelineEvents = [
+const { incidents } = useSocChannel();
+const { status: streamStatus } = useIncidentStream(props.incidentId);
+
+const matchedIncident = computed(() =>
+    incidents.value.find((inc) => inc.incident_id === props.incidentId),
+);
+
+const incidentTitle = computed(
+    () =>
+        matchedIncident.value?.title ||
+        'SSH Brute Force Attack on Auth Gateway',
+);
+const incidentSeverity = computed(
+    () => matchedIncident.value?.severity || 'CRITICAL',
+);
+const incidentStatus = computed(
+    () => streamStatus.value || matchedIncident.value?.status || 'ANALYZING',
+);
+const targetServer = computed(
+    () => matchedIncident.value?.target_server || 'auth-srv-01',
+);
+const attackerIp = computed(
+    () => matchedIncident.value?.attacker_ip || '192.168.1.105',
+);
+const ruleId = computed(
+    () => matchedIncident.value?.triggered_rule_id || 'RULE-SSH-01',
+);
+const firstSeen = computed(
+    () => matchedIncident.value?.first_seen || new Date().toISOString(),
+);
+
+const timelineEvents = computed(() => [
     {
         id: 'evt-1',
-        timestamp: '2026-10-16 12:30:00 UTC',
+        timestamp: firstSeen.value.replace('T', ' ').slice(0, 19) + ' UTC',
         title: 'Incident Triggered',
-        description:
-            'Rule RULE-SSH-01 matched 42 failed attempts from 192.168.1.105',
-        severity: 'CRITICAL' as const,
+        description: `Rule ${ruleId.value} matched anomalous activity from ${attackerIp.value}`,
+        severity: incidentSeverity.value,
         status: 'NEW' as const,
         actor: 'LogEngine',
     },
     {
         id: 'evt-2',
-        timestamp: '2026-10-16 12:30:02 UTC',
+        timestamp:
+            new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         title: 'AI SOC Agent Initialized',
-        description:
-            'Agent started autonomous investigation playbook for auth-srv-01',
-        status: 'ANALYZING' as const,
+        description: `Agent started autonomous investigation playbook for ${targetServer.value}`,
+        status: incidentStatus.value,
         actor: 'Agent-Claude',
     },
-    {
-        id: 'evt-3',
-        timestamp: '2026-10-16 12:30:05 UTC',
-        title: 'Mitigation Approval Requested',
-        description:
-            'Agent requested authorization to block IP 192.168.1.105 and isolate service port',
-        status: 'MITIGATING' as const,
-        actor: 'Agent-Claude',
-    },
-];
+]);
 
 function handleApprove() {
     alert('Mitigation action approved and executed successfully.');
+    approvalOpen.value = false;
 }
 
 function handleReject() {
     alert('Mitigation action rejected.');
+    approvalOpen.value = false;
 }
 </script>
 
@@ -71,32 +96,32 @@ function handleReject() {
                         class="font-mono text-sm font-semibold text-muted-foreground"
                         >{{ incidentId }}</span
                     >
-                    <SeverityBadge severity="CRITICAL" />
-                    <IncidentBadge status="ANALYZING" />
+                    <SeverityBadge :severity="incidentSeverity" />
+                    <IncidentBadge :status="incidentStatus" />
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-foreground">
-                    SSH Brute Force Attack on Auth Gateway
+                    {{ incidentTitle }}
                 </h1>
                 <div
                     class="flex items-center gap-4 font-mono text-xs text-muted-foreground"
                 >
                     <span
                         >Target:
-                        <strong class="text-foreground"
-                            >auth-srv-01</strong
-                        ></span
+                        <strong class="text-foreground">{{
+                            targetServer
+                        }}</strong></span
                     >
                     <span
                         >Attacker IP:
-                        <strong class="text-rose-600 dark:text-rose-400"
-                            >192.168.1.105</strong
-                        ></span
+                        <strong class="text-rose-600 dark:text-rose-400">{{
+                            attackerIp
+                        }}</strong></span
                     >
                     <span
                         >Rule ID:
-                        <strong class="text-foreground"
-                            >RULE-SSH-01</strong
-                        ></span
+                        <strong class="text-foreground">{{
+                            ruleId
+                        }}</strong></span
                     >
                 </div>
             </div>
@@ -145,7 +170,7 @@ function handleReject() {
                     </h2>
                 </div>
                 <div class="rounded-xl border border-border bg-card p-6">
-                    <IncidentTimeline :events="mockTimelineEvents" />
+                    <IncidentTimeline :events="timelineEvents" />
                 </div>
             </div>
         </div>
@@ -155,7 +180,7 @@ function handleReject() {
             v-model:open="approvalOpen"
             title="Remediation Approval Required"
             description="Agent has verified brute-force origin and requests immediate firewall block."
-            actionName="iptables -A INPUT -s 192.168.1.105 -j DROP"
+            :actionName="`iptables -A INPUT -s ${attackerIp} -j DROP`"
             @approve="handleApprove"
             @reject="handleReject"
         />

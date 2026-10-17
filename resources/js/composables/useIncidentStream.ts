@@ -1,7 +1,9 @@
 import type Echo from 'laravel-echo';
-import { onUnmounted, ref, watch, type Ref } from 'vue';
+import { computed, onUnmounted, ref, watch, type Ref } from 'vue';
+import { useAttackSimulation } from '@/composables/useAttackSimulation';
+import { demoMode } from '@/composables/useDemoMode';
 import { useEcho } from '@/composables/useEcho';
-import type { IncidentStatus } from '@/types/soc';
+import type { AgentExecutionUpdatedData, IncidentStatus } from '@/types/soc';
 
 type EchoInstance = Echo<'reverb'>;
 
@@ -35,13 +37,34 @@ export interface UseIncidentStreamReturn {
 export function useIncidentStream(incidentId: string): UseIncidentStreamReturn {
     const steps = ref<AgentStep[]>([]);
     const status = ref<IncidentStatus | null>(null);
-    const { echo, isConnected } = useEcho();
 
-    let subscribed = false;
+    const { echo, isConnected: echoIsConnected } = useEcho();
+    const simulation = useAttackSimulation();
 
-    const subscribe = (instance: EchoInstance): void => {
-        if (subscribed) return;
-        subscribed = true;
+    const isConnected = computed(() =>
+        demoMode.value ? simulation.isRunning.value : echoIsConnected.value,
+    );
+
+    let echoSubscribed = false;
+    let unsubSimStep: (() => void) | null = null;
+
+    const cleanupEcho = (): void => {
+        if (echo.value && echoSubscribed) {
+            echo.value.leave(`incident.${incidentId}`);
+            echoSubscribed = false;
+        }
+    };
+
+    const cleanupSim = (): void => {
+        if (unsubSimStep) {
+            unsubSimStep();
+            unsubSimStep = null;
+        }
+    };
+
+    const subscribeEcho = (instance: EchoInstance): void => {
+        if (echoSubscribed) return;
+        echoSubscribed = true;
 
         instance
             .private(`incident.${incidentId}`)
@@ -66,19 +89,49 @@ export function useIncidentStream(incidentId: string): UseIncidentStreamReturn {
             );
     };
 
+    const subscribeSim = (): void => {
+        if (unsubSimStep) return;
+
+        unsubSimStep = simulation.onAgentStep(
+            incidentId,
+            (stepData: AgentExecutionUpdatedData) => {
+                status.value = stepData.current_status;
+
+                steps.value = [
+                    ...steps.value,
+                    {
+                        step: stepData.step,
+                        thought: stepData.thought,
+                        toolCalled: stepData.tool_called,
+                        toolParameters: stepData.tool_parameters,
+                        toolResult: stepData.tool_result,
+                        status: stepData.current_status,
+                        timestamp: new Date().toISOString(),
+                    },
+                ];
+            },
+        );
+    };
+
     watch(
-        echo,
-        (instance) => {
-            if (instance) subscribe(instance);
+        [demoMode, echo],
+        ([isDemo, echoInstance]) => {
+            if (isDemo) {
+                cleanupEcho();
+                subscribeSim();
+            } else {
+                cleanupSim();
+                if (echoInstance) {
+                    subscribeEcho(echoInstance);
+                }
+            }
         },
         { immediate: true },
     );
 
     onUnmounted(() => {
-        if (echo.value && subscribed) {
-            echo.value.leave(`incident.${incidentId}`);
-            subscribed = false;
-        }
+        cleanupEcho();
+        cleanupSim();
     });
 
     return {

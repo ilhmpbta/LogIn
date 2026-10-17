@@ -4,58 +4,23 @@ import IncidentTable, {
     type IncidentItem,
 } from '@/components/soc/IncidentTable.vue';
 import { Search } from '@lucide/vue';
+import { useSocChannel } from '@/composables/useSocChannel';
+
+const { incidents } = useSocChannel({ maxIncidents: 100 });
 
 const searchQuery = ref('');
 const selectedSeverity = ref<string>('ALL');
 const selectedStatus = ref<string>('ALL');
 
-const mockIncidents = ref<IncidentItem[]>([
-    {
-        id: 'inc-001',
-        incident_id: 'inc-20261016-001',
-        title: 'SSH Brute Force Attack on Auth Gateway',
-        severity: 'CRITICAL',
-        status: 'ANALYZING',
-        target_server: 'auth-srv-01',
-        attacker_ip: '192.168.1.105',
-        triggered_rule_id: 'RULE-SSH-01',
-        log_count_in_window: 42,
-        first_seen: new Date().toISOString(),
-        last_seen: new Date().toISOString(),
-        logs_summary: ['Failed SSH login'],
-    },
-    {
-        id: 'inc-002',
-        incident_id: 'inc-20261016-002',
-        title: 'SQL Injection on Production API Endpoint',
-        severity: 'HIGH',
-        status: 'MITIGATING',
-        target_server: 'web-api-02',
-        attacker_ip: '45.33.32.156',
-        triggered_rule_id: 'RULE-SQLI-04',
-        log_count_in_window: 15,
-        first_seen: new Date(Date.now() - 300000).toISOString(),
-        last_seen: new Date().toISOString(),
-        logs_summary: ['SQL payload detected'],
-    },
-    {
-        id: 'inc-003',
-        incident_id: 'inc-20261016-003',
-        title: 'Unauthorized Port Scan on Database Server',
-        severity: 'MEDIUM',
-        status: 'NEW',
-        target_server: 'db-master-01',
-        attacker_ip: '185.220.101.5',
-        triggered_rule_id: 'RULE-SCAN-09',
-        log_count_in_window: 120,
-        first_seen: new Date(Date.now() - 600000).toISOString(),
-        last_seen: new Date().toISOString(),
-        logs_summary: ['TCP SYN scan detected'],
-    },
-]);
+const incidentItems = computed<IncidentItem[]>(() =>
+    incidents.value.map((inc) => ({
+        ...inc,
+        id: inc.incident_id,
+    })),
+);
 
 const filteredIncidents = computed(() => {
-    return mockIncidents.value.filter((inc) => {
+    return incidentItems.value.filter((inc) => {
         const matchesSearch =
             inc.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             inc.incident_id

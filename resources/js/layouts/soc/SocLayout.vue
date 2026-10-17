@@ -15,9 +15,11 @@ import {
     Settings,
     LogOut,
     ShieldCheck,
+    Radio,
 } from '@lucide/vue';
 import { computed, ref, onMounted } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
+import { demoMode, toggleDemoMode } from '@/composables/useDemoMode';
 import { useTypedPage } from '@/composables/useTypedPage';
 import {
     DropdownMenu,
@@ -161,13 +163,21 @@ function handleLogout() {
                 >
                     <span class="flex items-center gap-1.5 font-mono">
                         <span
-                            class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+                            class="h-2 w-2 animate-pulse rounded-full"
+                            :class="
+                                demoMode ? 'bg-amber-500' : 'bg-emerald-500'
+                            "
                         />
-                        Reverb WS
+                        {{ demoMode ? 'Demo Sim' : 'Reverb WS' }}
                     </span>
                     <span
-                        class="rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"
-                        >CONNECTED</span
+                        class="rounded border px-1.5 py-0.5 font-mono text-[10px]"
+                        :class="
+                            demoMode
+                                ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        "
+                        >{{ demoMode ? 'SIMULATING' : 'CONNECTED' }}</span
                     >
                 </div>
 
@@ -253,6 +263,25 @@ function handleLogout() {
                                     Appearance
                                 </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                                class="cursor-pointer"
+                                @click="toggleDemoMode"
+                            >
+                                <Radio
+                                    class="mr-2 h-4 w-4 text-muted-foreground"
+                                />
+                                <span>Toggle Demo Mode</span>
+                                <span
+                                    class="ml-auto font-mono text-[10px] font-bold uppercase"
+                                    :class="
+                                        demoMode
+                                            ? 'text-amber-600 dark:text-amber-400'
+                                            : 'text-muted-foreground'
+                                    "
+                                >
+                                    {{ demoMode ? 'ON' : 'OFF' }}
+                                </span>
+                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -281,6 +310,17 @@ function handleLogout() {
                     </h1>
                 </div>
                 <div class="flex items-center gap-3">
+                    <!-- DEMO Mode Badge -->
+                    <div
+                        v-if="demoMode"
+                        class="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
+                    >
+                        <div
+                            class="h-2 w-2 animate-pulse rounded-full bg-amber-500"
+                        />
+                        <span class="font-mono">DEMO</span>
+                    </div>
+
                     <!-- Threat Level Indicator -->
                     <div
                         class="hidden items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground sm:flex"

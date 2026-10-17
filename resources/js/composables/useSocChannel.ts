@@ -1,5 +1,7 @@
 import type Echo from 'laravel-echo';
-import { onUnmounted, ref, watch, type Ref } from 'vue';
+import { computed, onUnmounted, ref, watch, type Ref } from 'vue';
+import { useAttackSimulation } from '@/composables/useAttackSimulation';
+import { demoMode } from '@/composables/useDemoMode';
 import { useEcho } from '@/composables/useEcho';
 import type { IncidentTriggeredData, NormalizedLog } from '@/types/soc';
 
@@ -11,9 +13,7 @@ interface LogIngestedPayload {
 }
 
 export interface UseSocChannelOptions {
-    /** Berapa banyak log yang disimpan di memory. Sisanya di-drop (FIFO). */
     maxLogs?: number;
-    /** Berapa banyak incident terbaru yang disimpan. */
     maxIncidents?: number;
 }
 
@@ -21,11 +21,14 @@ export interface UseSocChannelReturn {
     logs: Ref<NormalizedLog[]>;
     incidents: Ref<IncidentTriggeredData[]>;
     isConnected: Ref<boolean>;
-    /** True kalau user menekan tombol Pause di terminal viewer. */
     paused: Ref<boolean>;
     togglePause: () => void;
     clearLogs: () => void;
 }
+
+const logs = ref<NormalizedLog[]>([]);
+const incidents = ref<IncidentTriggeredData[]>([]);
+const paused = ref(false);
 
 export function useSocChannel(
     options: UseSocChannelOptions = {},
@@ -33,17 +36,39 @@ export function useSocChannel(
     const maxLogs = options.maxLogs ?? 5_000;
     const maxIncidents = options.maxIncidents ?? 100;
 
-    const logs = ref<NormalizedLog[]>([]);
-    const incidents = ref<IncidentTriggeredData[]>([]);
-    const paused = ref(false);
+    const { echo, isConnected: echoIsConnected } = useEcho();
+    const simulation = useAttackSimulation();
 
-    const { echo, isConnected } = useEcho();
+    const isConnected = computed(() =>
+        demoMode.value ? simulation.isRunning.value : echoIsConnected.value,
+    );
 
-    let subscribed = false;
+    let echoSubscribed = false;
+    let unsubSimLog: (() => void) | null = null;
+    let unsubSimIncident: (() => void) | null = null;
 
-    const subscribe = (instance: EchoInstance): void => {
-        if (subscribed) return;
-        subscribed = true;
+    const cleanupEcho = (): void => {
+        if (echo.value && echoSubscribed) {
+            echo.value.leave('soc-logs');
+            echo.value.leave('soc-incidents');
+            echoSubscribed = false;
+        }
+    };
+
+    const cleanupSim = (): void => {
+        if (unsubSimLog) {
+            unsubSimLog();
+            unsubSimLog = null;
+        }
+        if (unsubSimIncident) {
+            unsubSimIncident();
+            unsubSimIncident = null;
+        }
+    };
+
+    const subscribeEcho = (instance: EchoInstance): void => {
+        if (echoSubscribed) return;
+        echoSubscribed = true;
 
         instance
             .channel('soc-logs')
@@ -69,20 +94,52 @@ export function useSocChannel(
             });
     };
 
+    const subscribeSim = (): void => {
+        if (unsubSimLog || unsubSimIncident) return;
+
+        simulation.start();
+
+        unsubSimLog = simulation.onLog((log: NormalizedLog) => {
+            if (paused.value) return;
+
+            const next = [...logs.value, log];
+            logs.value =
+                next.length > maxLogs
+                    ? next.slice(next.length - maxLogs)
+                    : next;
+        });
+
+        unsubSimIncident = simulation.onIncident(
+            (incident: IncidentTriggeredData) => {
+                const next = [incident, ...incidents.value];
+                incidents.value =
+                    next.length > maxIncidents
+                        ? next.slice(0, maxIncidents)
+                        : next;
+            },
+        );
+    };
+
     watch(
-        echo,
-        (instance) => {
-            if (instance) subscribe(instance);
+        [demoMode, echo],
+        ([isDemo, echoInstance]) => {
+            if (isDemo) {
+                cleanupEcho();
+                subscribeSim();
+            } else {
+                cleanupSim();
+                simulation.stop();
+                if (echoInstance) {
+                    subscribeEcho(echoInstance);
+                }
+            }
         },
         { immediate: true },
     );
 
     onUnmounted(() => {
-        if (echo.value && subscribed) {
-            echo.value.leave('soc-logs');
-            echo.value.leave('soc-incidents');
-            subscribed = false;
-        }
+        cleanupEcho();
+        cleanupSim();
     });
 
     return {
