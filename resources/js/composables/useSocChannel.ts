@@ -1,5 +1,7 @@
 import type Echo from 'laravel-echo';
-import { onUnmounted, ref, watch, type Ref } from 'vue';
+import { computed, onUnmounted, ref, watch, type Ref } from 'vue';
+import { useAttackSimulation } from '@/composables/useAttackSimulation';
+import { demoMode } from '@/composables/useDemoMode';
 import { useEcho } from '@/composables/useEcho';
 import type { IncidentTriggeredData, NormalizedLog } from '@/types/soc';
 
@@ -37,13 +39,39 @@ export function useSocChannel(
     const incidents = ref<IncidentTriggeredData[]>([]);
     const paused = ref(false);
 
-    const { echo, isConnected } = useEcho();
+    const { echo, isConnected: echoIsConnected } = useEcho();
+    const simulation = useAttackSimulation();
 
-    let subscribed = false;
+    const isConnected = computed(() =>
+        demoMode.value ? simulation.isRunning.value : echoIsConnected.value,
+    );
 
-    const subscribe = (instance: EchoInstance): void => {
-        if (subscribed) return;
-        subscribed = true;
+    let echoSubscribed = false;
+    let unsubSimLog: (() => void) | null = null;
+    let unsubSimIncident: (() => void) | null = null;
+
+    const cleanupEcho = (): void => {
+        if (echo.value && echoSubscribed) {
+            echo.value.leave('soc-logs');
+            echo.value.leave('soc-incidents');
+            echoSubscribed = false;
+        }
+    };
+
+    const cleanupSim = (): void => {
+        if (unsubSimLog) {
+            unsubSimLog();
+            unsubSimLog = null;
+        }
+        if (unsubSimIncident) {
+            unsubSimIncident();
+            unsubSimIncident = null;
+        }
+    };
+
+    const subscribeEcho = (instance: EchoInstance): void => {
+        if (echoSubscribed) return;
+        echoSubscribed = true;
 
         instance
             .channel('soc-logs')
@@ -69,20 +97,52 @@ export function useSocChannel(
             });
     };
 
+    const subscribeSim = (): void => {
+        if (unsubSimLog || unsubSimIncident) return;
+
+        simulation.start();
+
+        unsubSimLog = simulation.onLog((log: NormalizedLog) => {
+            if (paused.value) return;
+
+            const next = [...logs.value, log];
+            logs.value =
+                next.length > maxLogs
+                    ? next.slice(next.length - maxLogs)
+                    : next;
+        });
+
+        unsubSimIncident = simulation.onIncident(
+            (incident: IncidentTriggeredData) => {
+                const next = [incident, ...incidents.value];
+                incidents.value =
+                    next.length > maxIncidents
+                        ? next.slice(0, maxIncidents)
+                        : next;
+            },
+        );
+    };
+
     watch(
-        echo,
-        (instance) => {
-            if (instance) subscribe(instance);
+        [demoMode, echo],
+        ([isDemo, echoInstance]) => {
+            if (isDemo) {
+                cleanupEcho();
+                subscribeSim();
+            } else {
+                cleanupSim();
+                simulation.stop();
+                if (echoInstance) {
+                    subscribeEcho(echoInstance);
+                }
+            }
         },
         { immediate: true },
     );
 
     onUnmounted(() => {
-        if (echo.value && subscribed) {
-            echo.value.leave('soc-logs');
-            echo.value.leave('soc-incidents');
-            subscribed = false;
-        }
+        cleanupEcho();
+        cleanupSim();
     });
 
     return {

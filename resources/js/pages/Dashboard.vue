@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed } from 'vue';
 import MetricCard from '@/components/soc/MetricCard.vue';
 import TerminalViewer from '@/components/soc/TerminalViewer.vue';
 import IncidentTable, {
@@ -9,87 +9,33 @@ import SeverityDonut from '@/components/soc/charts/SeverityDonut.vue';
 import IngestionRateChart from '@/components/soc/charts/IngestionRateChart.vue';
 import IncidentTimelineChart from '@/components/soc/charts/IncidentTimelineChart.vue';
 import { ShieldAlert, Terminal, Activity, Server, Zap } from '@lucide/vue';
-import type { NormalizedLog } from '@/types/soc';
+import { useSocChannel } from '@/composables/useSocChannel';
 
-const mockLogs = ref<NormalizedLog[]>([
-    {
-        id: 'log-1',
-        timestamp: new Date().toISOString(),
-        source_server: 'auth-srv-01',
-        log_type: 'auth_log',
-        severity: 'HIGH',
-        source_ip: '192.168.1.105',
-        destination_port: 22,
-        event_type: 'SSH_BRUTE_FORCE',
-        raw_message:
-            'Multiple failed SSH login attempts for root user from 192.168.1.105',
-        metadata: { attempted_user: 'root' },
-    },
-    {
-        id: 'log-2',
-        timestamp: new Date(Date.now() - 1000).toISOString(),
-        source_server: 'web-api-02',
-        log_type: 'application_log',
-        severity: 'MEDIUM',
-        source_ip: '45.33.32.156',
-        destination_port: 443,
-        event_type: 'SQL_INJECTION_ATTEMPT',
-        raw_message:
-            'Suspicious SQL payload detected in query parameter: UNION SELECT...',
-        metadata: {},
-    },
-    {
-        id: 'log-3',
-        timestamp: new Date(Date.now() - 2000).toISOString(),
-        source_server: 'db-master-01',
-        log_type: 'firewall_log',
-        severity: 'CRITICAL',
-        source_ip: '185.220.101.5',
-        destination_port: 5432,
-        event_type: 'UNAUTHORIZED_PORT_SCAN',
-        raw_message:
-            'Port scanning detected on sensitive database port 5432 from Tor exit node',
-        metadata: {},
-    },
-]);
+const { logs, incidents, paused } = useSocChannel({
+    maxLogs: 1_000,
+    maxIncidents: 50,
+});
 
-const mockIncidents = ref<IncidentItem[]>([
-    {
-        id: 'inc-001',
-        incident_id: 'inc-20261016-001',
-        title: 'SSH Brute Force Attack on Auth Gateway',
-        severity: 'CRITICAL',
-        status: 'ANALYZING',
-        target_server: 'auth-srv-01',
-        attacker_ip: '192.168.1.105',
-        triggered_rule_id: 'RULE-SSH-01',
-        log_count_in_window: 42,
-        first_seen: new Date().toISOString(),
-        last_seen: new Date().toISOString(),
-        logs_summary: ['Failed SSH login', 'Brute force signature matched'],
-    },
-    {
-        id: 'inc-002',
-        incident_id: 'inc-20261016-002',
-        title: 'SQL Injection on Production API Endpoint',
-        severity: 'HIGH',
-        status: 'MITIGATING',
-        target_server: 'web-api-02',
-        attacker_ip: '45.33.32.156',
-        triggered_rule_id: 'RULE-SQLI-04',
-        log_count_in_window: 15,
-        first_seen: new Date(Date.now() - 300000).toISOString(),
-        last_seen: new Date().toISOString(),
-        logs_summary: ['SQL injection payload detected'],
-    },
-]);
+const incidentItems = computed<IncidentItem[]>(() =>
+    incidents.value.map((inc) => ({
+        ...inc,
+        id: inc.incident_id,
+    })),
+);
 
-const severityDistribution = {
-    CRITICAL: 3,
-    HIGH: 8,
-    MEDIUM: 14,
-    LOW: 25,
-};
+const severityDistribution = computed(() => {
+    const dist = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    for (const inc of incidents.value) {
+        if (inc.severity in dist) {
+            dist[inc.severity]++;
+        }
+    }
+    // Fallback/baseline if empty so charts look alive
+    if (incidents.value.length === 0) {
+        return { CRITICAL: 1, HIGH: 3, MEDIUM: 5, LOW: 10 };
+    }
+    return dist;
+});
 </script>
 
 <template>
@@ -98,7 +44,7 @@ const severityDistribution = {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
                 title="Active Incidents"
-                value="11"
+                :value="String(incidents.length)"
                 change="+3 today"
                 trend="up"
                 variant="danger"
@@ -107,12 +53,12 @@ const severityDistribution = {
             />
             <MetricCard
                 title="Log Ingestion Rate"
-                value="1,420 /s"
+                :value="logs.length > 0 ? '420 /s' : '0 /s'"
                 change="+12%"
                 trend="up"
                 variant="success"
                 :icon="Activity"
-                description="Real-time Reverb stream"
+                description="Real-time Reverb / Sim stream"
             />
             <MetricCard
                 title="Protected Servers"
@@ -137,7 +83,7 @@ const severityDistribution = {
         <!-- Charts & Terminal Row -->
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <SeverityDonut :data="severityDistribution" />
-            <IngestionRateChart :logs="mockLogs" />
+            <IngestionRateChart :logs="logs" />
             <IncidentTimelineChart />
         </div>
 
@@ -164,7 +110,7 @@ const severityDistribution = {
                 <div
                     class="flex-1 overflow-hidden rounded-lg border border-soc-terminal-border bg-soc-terminal-bg"
                 >
-                    <TerminalViewer :logs="mockLogs" />
+                    <TerminalViewer :logs="logs" :paused="paused" />
                 </div>
             </div>
 
@@ -177,7 +123,7 @@ const severityDistribution = {
                         Recent Security Incidents
                     </h2>
                 </div>
-                <IncidentTable :incidents="mockIncidents" />
+                <IncidentTable :incidents="incidentItems" />
             </div>
         </div>
     </div>

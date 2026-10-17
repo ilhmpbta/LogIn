@@ -2,68 +2,15 @@
 import { ref, computed } from 'vue';
 import TerminalViewer from '@/components/soc/TerminalViewer.vue';
 import { Search, Terminal, Pause, Play } from '@lucide/vue';
-import type { NormalizedLog } from '@/types/soc';
+import { useSocChannel } from '@/composables/useSocChannel';
+
+const { logs, paused, togglePause } = useSocChannel({ maxLogs: 2_000 });
 
 const searchQuery = ref('');
 const selectedLogType = ref<string>('ALL');
-const isPaused = ref(false);
-
-const mockLogs = ref<NormalizedLog[]>([
-    {
-        id: 'log-1',
-        timestamp: new Date().toISOString(),
-        source_server: 'auth-srv-01',
-        log_type: 'auth_log',
-        severity: 'HIGH',
-        source_ip: '192.168.1.105',
-        destination_port: 22,
-        event_type: 'SSH_BRUTE_FORCE',
-        raw_message:
-            'Multiple failed SSH login attempts for root user from 192.168.1.105',
-        metadata: { attempted_user: 'root' },
-    },
-    {
-        id: 'log-2',
-        timestamp: new Date(Date.now() - 1000).toISOString(),
-        source_server: 'web-api-02',
-        log_type: 'application_log',
-        severity: 'MEDIUM',
-        source_ip: '45.33.32.156',
-        destination_port: 443,
-        event_type: 'SQL_INJECTION_ATTEMPT',
-        raw_message:
-            'Suspicious SQL payload detected in query parameter: UNION SELECT...',
-        metadata: {},
-    },
-    {
-        id: 'log-3',
-        timestamp: new Date(Date.now() - 2000).toISOString(),
-        source_server: 'db-master-01',
-        log_type: 'firewall_log',
-        severity: 'CRITICAL',
-        source_ip: '185.220.101.5',
-        destination_port: 5432,
-        event_type: 'UNAUTHORIZED_PORT_SCAN',
-        raw_message:
-            'Port scanning detected on sensitive database port 5432 from Tor exit node',
-        metadata: {},
-    },
-    {
-        id: 'log-4',
-        timestamp: new Date(Date.now() - 3000).toISOString(),
-        source_server: 'sys-core-01',
-        log_type: 'system_log',
-        severity: 'LOW',
-        source_ip: '10.0.0.15',
-        destination_port: 80,
-        event_type: 'SERVICE_RESTART',
-        raw_message: 'Nginx web server process gracefully reloaded by systemd',
-        metadata: {},
-    },
-]);
 
 const filteredLogs = computed(() => {
-    return mockLogs.value.filter((log) => {
+    return logs.value.filter((log) => {
         const matchesSearch =
             log.raw_message
                 .toLowerCase()
@@ -100,16 +47,11 @@ const filteredLogs = computed(() => {
             <div class="flex items-center gap-3">
                 <button
                     class="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
-                    @click="isPaused = !isPaused"
+                    @click="togglePause"
                 >
-                    <Pause
-                        v-if="!isPaused"
-                        class="h-3.5 w-3.5 text-amber-500"
-                    />
+                    <Pause v-if="!paused" class="h-3.5 w-3.5 text-amber-500" />
                     <Play v-else class="h-3.5 w-3.5 text-emerald-500" />
-                    <span>{{
-                        isPaused ? 'Resume Stream' : 'Pause Stream'
-                    }}</span>
+                    <span>{{ paused ? 'Resume Stream' : 'Pause Stream' }}</span>
                 </button>
             </div>
         </div>
@@ -138,7 +80,7 @@ const filteredLogs = computed(() => {
                     <option value="ALL">All Log Types</option>
                     <option value="auth_log">auth_log</option>
                     <option value="network_log">network_log</option>
-                    <option value="system_log">system_log</option>
+                    <option value="logs">logs</option>
                     <option value="application_log">application_log</option>
                     <option value="firewall_log">firewall_log</option>
                 </select>
@@ -161,7 +103,7 @@ const filteredLogs = computed(() => {
                 >
             </div>
             <div class="flex-1 overflow-hidden">
-                <TerminalViewer :logs="filteredLogs" :paused="isPaused" />
+                <TerminalViewer :logs="filteredLogs" :paused="paused" />
             </div>
         </div>
     </div>
