@@ -109,7 +109,7 @@ const severityDistribution = computed(() => {
                         >
                     </div>
                     <span
-                        class="h-2 w-2 animate-ping rounded-full bg-emerald-500"
+                        class="h-2 w-2 animate-ping rounded-full bg-emerald-500 motion-reduce:animate-none"
                     />
                 </div>
                 <div

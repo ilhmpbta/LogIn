@@ -83,7 +83,7 @@ defineProps<{
                     class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs font-medium text-emerald-600 dark:text-emerald-400"
                 >
                     <span
-                        class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+                        class="h-2 w-2 animate-pulse rounded-full bg-emerald-500 motion-reduce:animate-none"
                     />
                     Autonomous Threat Intelligence & Response
                 </div>

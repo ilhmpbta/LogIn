@@ -17,7 +17,7 @@ const { steps, status } = useIncidentStream(props.incidentId);
         />
         <div
             v-if="status === 'ANALYZING'"
-            class="animate-pulse text-emerald-400"
+            class="animate-pulse text-emerald-400 motion-reduce:animate-none"
         >
             ● Agent thinking...
         </div>

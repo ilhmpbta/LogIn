@@ -35,7 +35,7 @@ const sizeClasses = computed(() => {
     >
         <span v-if="style.pulse" class="relative flex h-2 w-2">
             <span
-                class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+                class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 motion-reduce:animate-none"
                 :class="style.text.replace('text-', 'bg-')"
             />
             <span

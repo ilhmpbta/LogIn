@@ -167,14 +167,25 @@ function handleRowClick(incident: IncidentItem): void {
                         <th
                             v-for="header in headerGroup.headers"
                             :key="header.id"
-                            class="cursor-pointer px-4 py-3 font-semibold transition-colors select-none hover:text-foreground"
-                            @click="
-                                header.column.getToggleSortingHandler()?.(
-                                    $event,
-                                )
+                            class="cursor-pointer font-semibold transition-colors select-none hover:text-muted-foreground"
+                            :aria-sort="
+                                header.column.getIsSorted() === 'asc'
+                                    ? 'ascending'
+                                    : header.column.getIsSorted() === 'desc'
+                                      ? 'descending'
+                                      : 'none'
                             "
                         >
-                            <div class="flex items-center gap-1.5">
+                            <button
+                                v-if="header.column.getCanSort()"
+                                type="button"
+                                class="flex w-full cursor-pointer items-center gap-1.5 px-4 py-3 text-left transition-colors hover:text-foreground"
+                                @click="
+                                    header.column.getToggleSortingHandler()?.(
+                                        $event,
+                                    )
+                                "
+                            >
                                 <FlexRender
                                     v-if="!header.isPlaceholder"
                                     :render="header.column.columnDef.header"
@@ -187,6 +198,16 @@ function handleRowClick(incident: IncidentItem): void {
                                             : '▼'
                                     }}
                                 </span>
+                            </button>
+                            <div
+                                v-else
+                                class="flex items-center gap-1.5 px-4 py-3"
+                            >
+                                <FlexRender
+                                    v-if="!header.isPlaceholder"
+                                    :render="header.column.columnDef.header"
+                                    :props="header.getContext()"
+                                />
                             </div>
                         </th>
                     </tr>
