@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useThrottleFn } from '@vueuse/core';
 import VueApexCharts from 'vue3-apexcharts';
 import { Activity } from '@lucide/vue';
 import type { NormalizedLog } from '@/types/soc';
@@ -9,12 +10,24 @@ const props = defineProps<{
     logs: NormalizedLog[];
 }>();
 
+const throttledLogs = ref<NormalizedLog[]>(props.logs);
+
+const updateThrottledLogs = useThrottleFn((next: NormalizedLog[]) => {
+    throttledLogs.value = next;
+}, 500);
+
+watch(
+    () => props.logs,
+    (next) => updateThrottledLogs(next),
+    { deep: false },
+);
+
 const { resolvedAppearance } = useAppearance();
 const isDark = computed(() => resolvedAppearance.value === 'dark');
 
 const chartData = computed(() => {
     const counts: Record<string, number> = {};
-    for (const log of props.logs) {
+    for (const log of throttledLogs.value) {
         if (!log.timestamp) continue;
         const timeKey = log.timestamp.slice(0, 19);
         counts[timeKey] = (counts[timeKey] || 0) + 1;
