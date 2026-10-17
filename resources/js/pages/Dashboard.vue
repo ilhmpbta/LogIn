@@ -7,7 +7,7 @@ import IncidentTable, {
 } from '@/components/soc/IncidentTable.vue';
 import SeverityDonut from '@/components/soc/charts/SeverityDonut.vue';
 import IngestionRateChart from '@/components/soc/charts/IngestionRateChart.vue';
-import IncidentTimelineChart from '@/components/soc/charts/IncidentTimelineChart.vue';
+import AttackMap from '@/components/soc/AttackMap.vue';
 import { ShieldAlert, Terminal, Activity, Server, Zap } from '@lucide/vue';
 import { useSocChannel } from '@/composables/useSocChannel';
 
@@ -84,7 +84,7 @@ const severityDistribution = computed(() => {
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <SeverityDonut :data="severityDistribution" />
             <IngestionRateChart :logs="logs" />
-            <IncidentTimelineChart />
+            <AttackMap />
         </div>
 
         <!-- Live Terminal & Incidents Table -->
