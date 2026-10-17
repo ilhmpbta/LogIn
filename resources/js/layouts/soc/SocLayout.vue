@@ -16,11 +16,15 @@ import {
     LogOut,
     ShieldCheck,
     Radio,
+    Volume2,
+    VolumeX,
 } from '@lucide/vue';
 import { computed, ref, onMounted } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { demoMode, toggleDemoMode } from '@/composables/useDemoMode';
 import { useTypedPage } from '@/composables/useTypedPage';
+import { useIncidentAlerts } from '@/composables/useIncidentAlerts';
+import { useAlertSound } from '@/composables/useAlertSound';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,6 +39,11 @@ import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { edit as editAppearance } from '@/routes/appearance';
 import { logout } from '@/routes';
+
+// Call useIncidentAlerts once at setup scope
+useIncidentAlerts();
+
+const { isMuted, toggleMute } = useAlertSound();
 
 const page = useTypedPage();
 const currentUrl = computed(() => page.url);
@@ -280,6 +289,26 @@ function handleLogout() {
                                     "
                                 >
                                     {{ demoMode ? 'ON' : 'OFF' }}
+                                </span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                class="cursor-pointer"
+                                @click="toggleMute"
+                            >
+                                <component
+                                    :is="isMuted ? VolumeX : Volume2"
+                                    class="mr-2 h-4 w-4 text-muted-foreground"
+                                />
+                                <span>Mute Alerts</span>
+                                <span
+                                    class="ml-auto font-mono text-[10px] font-bold uppercase"
+                                    :class="
+                                        isMuted
+                                            ? 'text-amber-600 dark:text-amber-400'
+                                            : 'text-muted-foreground'
+                                    "
+                                >
+                                    {{ isMuted ? 'MUTED' : 'ON' }}
                                 </span>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
