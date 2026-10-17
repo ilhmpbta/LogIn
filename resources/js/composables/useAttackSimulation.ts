@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue';
+import { lookupSourceGeo } from '@/lib/soc/geo';
 import type {
     AgentExecutionUpdatedData,
     IncidentStatus,
@@ -330,6 +331,7 @@ function generateLog(): NormalizedLog {
     const server = pickRandom(SERVERS);
     const ip = pickSourceIp(template);
     const { raw_message, metadata } = template.build({ server, ip });
+    const geo = lookupSourceGeo(ip);
 
     return {
         id: uuid(),
@@ -341,7 +343,13 @@ function generateLog(): NormalizedLog {
         destination_port: template.destination_port,
         event_type: template.event_type,
         raw_message,
-        metadata,
+        metadata: {
+            ...metadata,
+            geo_location: {
+                country: geo.country,
+                city: geo.city,
+            },
+        },
     };
 }
 
