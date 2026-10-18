@@ -11,7 +11,7 @@ class AgentExecutionUpdatedTest extends TestCase
 {
     public function test_broadcast_as_has_no_leading_dot(): void
     {
-        $dto   = new AgentStepDTO('inc-1', 1, 'test');
+        $dto = new AgentStepDTO('inc-1', 1, 'test');
         $event = new AgentExecutionUpdated($dto);
 
         $this->assertSame('AgentExecutionUpdated', $event->broadcastAs());
@@ -21,7 +21,7 @@ class AgentExecutionUpdatedTest extends TestCase
 
     public function test_broadcast_on_is_private_channel(): void
     {
-        $dto   = new AgentStepDTO('inc-20261017-001', 1, 'test');
+        $dto = new AgentStepDTO('inc-20261017-001', 1, 'test');
         $event = new AgentExecutionUpdated($dto);
 
         $channel = $event->broadcastOn();
@@ -33,16 +33,16 @@ class AgentExecutionUpdatedTest extends TestCase
     public function test_broadcast_with_returns_bare_payload(): void
     {
         $dto = new AgentStepDTO(
-            incident_id:    'inc-1',
-            step:           2,
-            thought:        'Blocking IP.',
-            tool_called:    'block_ip',
+            incident_id: 'inc-1',
+            step: 2,
+            thought: 'Blocking IP.',
+            tool_called: 'block_ip',
             tool_parameters: ['ip' => '1.2.3.4'],
-            tool_result:    '{"success":true}',
+            tool_result: '{"success":true}',
             current_status: 'MITIGATING',
         );
 
-        $event   = new AgentExecutionUpdated($dto);
+        $event = new AgentExecutionUpdated($dto);
         $payload = $event->broadcastWith();
 
         $this->assertArrayNotHasKey('data', $payload);

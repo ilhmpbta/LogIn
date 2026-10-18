@@ -19,8 +19,12 @@ class AgentRun extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Model, $this>
+     */
     public function incident(): BelongsTo
     {
+        /** @phpstan-ignore-next-line class.notFound, argument.type, argument.templateType */
         return $this->belongsTo(Incident::class, 'incident_id', 'incident_id');
     }
 }

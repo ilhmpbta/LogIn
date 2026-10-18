@@ -13,9 +13,9 @@ class CheckFirewallRulesTool extends Tool
             ->withStringParameter('ip', 'IPv4 or IPv6 address to check.')
             ->using(function (string $ip): string {
                 // Replace after Role 4 ship BannedIp model
-                return json_encode([
-                    'ip'            => $ip,
-                    'is_blocked'    => false,
+                return (string) json_encode([
+                    'ip' => $ip,
+                    'is_blocked' => false,
                     'existing_rule' => null,
                 ]);
             });

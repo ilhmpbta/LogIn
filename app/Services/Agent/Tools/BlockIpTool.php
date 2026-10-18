@@ -18,33 +18,38 @@ class BlockIpTool extends Tool
             ->withStringParameter('reason', 'Reason code for the block (e.g. ssh-bruteforce).')
             ->using(function (string $ip, int|float $duration_seconds, string $reason): string {
                 if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
-                    return json_encode(['success' => false, 'error' => 'Invalid IP format']);
+                    return (string) json_encode([
+                        'success' => false,
+                        'error' => 'Invalid IP format',
+                    ]);
                 }
 
                 try {
-                    $result = Process::run(['sudo', '/usr/local/bin/logIn-block-ip', $ip])->timeout(10);
+                    $result = Process::timeout(10)->run(['sudo', '/usr/local/bin/logIn-block-ip', $ip]);
 
                     if (! $result->successful()) {
-                        return json_encode([
+                        return (string) json_encode([
                             'success' => false,
-                            'error'   => trim($result->errorOutput()),
+                            'error' => trim($result->errorOutput()),
                         ]);
                     }
 
                     Log::channel('single')->info('[SOC] block_ip executed (stub)', [
-                        'ip' => $ip, 'reason' => $reason, 'duration' => $duration_seconds,
+                        'ip' => $ip,
+                        'reason' => $reason,
+                        'duration' => $duration_seconds,
                     ]);
 
-                    return json_encode([
-                        'success'       => true,
-                        'ip'            => $ip,
-                        'message'       => "iptables rule inserted: INPUT -s {$ip} -j DROP",
+                    return (string) json_encode([
+                        'success' => true,
+                        'ip' => $ip,
+                        'message' => "iptables rule inserted: INPUT -s {$ip} -j DROP",
                         'duration_secs' => (int) $duration_seconds,
                     ]);
                 } catch (ProcessTimedOutException $e) {
-                    return json_encode([
+                    return (string) json_encode([
                         'success' => false,
-                        'error'   => 'Firewall command timed out after 10s',
+                        'error' => 'Firewall command timed out after 10s',
                     ]);
                 }
             });

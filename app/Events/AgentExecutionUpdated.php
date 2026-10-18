@@ -21,7 +21,7 @@ class AgentExecutionUpdated implements ShouldBroadcast
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel('incident.' . $this->payload->incident_id);
+        return new PrivateChannel('incident.'.$this->payload->incident_id);
     }
 
     public function broadcastAs(): string
@@ -29,6 +29,9 @@ class AgentExecutionUpdated implements ShouldBroadcast
         return 'AgentExecutionUpdated';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return $this->payload->toArray();

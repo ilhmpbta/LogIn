@@ -15,14 +15,14 @@ class NotifyOncallTool extends Tool
             ->withStringParameter('incident_id', 'The incident identifier, e.g. inc-20261017-001.')
             ->using(function (string $severity, string $incident_id): string {
                 Log::channel('single')->info('[SOC] notify_oncall dispatched (stub)', [
-                    'severity'    => $severity,
+                    'severity' => $severity,
                     'incident_id' => $incident_id,
                 ]);
 
-                return json_encode([
-                    'success'     => true,
-                    'dispatched'  => true,
-                    'channel'     => 'log',
+                return (string) json_encode([
+                    'success' => true,
+                    'dispatched' => true,
+                    'channel' => 'log',
                     'incident_id' => $incident_id,
                 ]);
             });

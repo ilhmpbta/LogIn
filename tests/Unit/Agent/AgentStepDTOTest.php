@@ -10,12 +10,12 @@ class AgentStepDTOTest extends TestCase
     public function test_to_array_matches_typescript_interface(): void
     {
         $dto = new AgentStepDTO(
-            incident_id:    'inc-20261017-001',
-            step:           1,
-            thought:        'Investigating the incident.',
-            tool_called:    'query_auth_logs',
+            incident_id: 'inc-20261017-001',
+            step: 1,
+            thought: 'Investigating the incident.',
+            tool_called: 'query_auth_logs',
             tool_parameters: ['source_ip' => '1.2.3.4', 'since' => '5m'],
-            tool_result:    '{"failed_attempts":5}',
+            tool_result: '{"failed_attempts":5}',
             current_status: 'ANALYZING',
         );
 
@@ -43,12 +43,12 @@ class AgentStepDTOTest extends TestCase
     public function test_nullable_fields_can_be_null(): void
     {
         $dto = new AgentStepDTO(
-            incident_id:    'inc-1',
-            step:           1,
-            thought:        'Pure reasoning step.',
-            tool_called:    null,
+            incident_id: 'inc-1',
+            step: 1,
+            thought: 'Pure reasoning step.',
+            tool_called: null,
             tool_parameters: null,
-            tool_result:    null,
+            tool_result: null,
             current_status: 'ANALYZING',
         );
 

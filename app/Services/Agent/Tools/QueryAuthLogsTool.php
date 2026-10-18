@@ -14,12 +14,12 @@ class QueryAuthLogsTool extends Tool
             ->withStringParameter('since', 'Time window, e.g. "5m", "1h".')
             ->using(function (string $source_ip, string $since): string {
                 //  Replace after Role 3 ship log model
-                return json_encode([
-                    'source_ip'         => $source_ip,
-                    'window'            => $since,
-                    'failed_attempts'   => 5,
+                return (string) json_encode([
+                    'source_ip' => $source_ip,
+                    'window' => $since,
+                    'failed_attempts' => 5,
                     'successful_logins' => 0,
-                    'attempted_user'    => 'root',
+                    'attempted_user' => 'root',
                 ]);
             });
     }
