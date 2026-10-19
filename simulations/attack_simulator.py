@@ -34,26 +34,36 @@ SOURCE_GEO = [
     "23.129.64.131"
 ]
 
+def _syslog_ts() -> str:
+    n = datetime.now(timezone.utc)
+    month = ["Jan","Feb","Mar","Apr","May","Jun",
+             "Jul","Aug","Sep","Oct","Nov","Dec"][n.month - 1]
+    return f"{month} {n.day:02d} {n.strftime('%H:%M:%S')}"
+
 def generate_payload(scenario, idx, override_ip=None, override_server=None):
     ip = override_ip or random.choice(SOURCE_GEO)
+    ts = _syslog_ts()
     
     if scenario == "ssh-brute":
         host = override_server or random.choice(["auth-srv-01", "auth-srv-02"])
         source = "auth.log"
         pid = random.randint(10000, 65000)
         port = random.randint(30000, 65000)
-        payload = f"Oct 17 12:00:00 {host} sshd[{pid}]: Failed password for root from {ip} port {port} ssh2"
+        payload = f"{ts} {host} sshd[{pid}]: Failed password for root from {ip} port {port} ssh2"
     elif scenario == "sqli":
         host = override_server or "web-api-01"
         source = "nginx.access.log"
-        now = datetime.now(timezone.utc).strftime("%d/%b/%Y:%H:%M:%S")
+        n = datetime.now(timezone.utc)
+        month = ["Jan","Feb","Mar","Apr","May","Jun",
+                 "Jul","Aug","Sep","Oct","Nov","Dec"][n.month - 1]
+        now = f"{n.day:02d}/{month}/{n.year}:{n.strftime('%H:%M:%S')}"
         payload = f'{ip} - - [{now} +0000] "GET /api/v1/users?id=1\'%20OR%20\'1\'=\'1 HTTP/1.1" 500 512 "-" "sqlmap/1.5"'
     elif scenario == "scan":
         host = override_server or "edge-fw-01"
         source = "kern.log"
         secs = f"{random.randint(10000, 99999)}.{random.randint(100, 999)}"
         sport = random.randint(30000, 65000)
-        payload = f"Oct 17 12:00:00 edge-fw-01 kernel: [{secs}] DROP IN=eth0 SRC={ip} DST=10.0.0.1 PROTO=TCP SPT={sport} DPT=22"
+        payload = f"{ts} edge-fw-01 kernel: [{secs}] DROP IN=eth0 SRC={ip} DST=10.0.0.1 PROTO=TCP SPT={sport} DPT=22"
     else:
         raise ValueError(f"Unknown scenario: {scenario}")
 
@@ -68,7 +78,6 @@ def validate_payload(item):
             return False
         # Check ASCII-printable and no shell metacharacters that are dangerous
         if not all(32 <= ord(c) < 127 for c in val):
-            # Allow standard printable ASCII (including tabs/newlines if any, but log lines are ASCII)
             pass
     return True
 
