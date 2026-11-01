@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('incident_id', 16)->primary();
             $table->string('title', 100);
             $table->enum('severity', ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
-            $table->enum('status', ['NEW', 'ANALYZING', 'MITIGATING', 'RESOLVED', 'FALSE_POSITIVE']);
+            $table->enum('status', ['NEW', 'ANALYZING', 'MITIGATING', 'MITIGATED', 'RESOLVED', 'FALSE_POSITIVE']);
             $table->string('target_server', 100);
             $table->string('attacker_ip', 45);
             $table->string('triggered_rule_id', 16);

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('reason')->nullable();
             $table->timestamp('banned_at')->useCurrent();
             $table->timestamp('expires_at')->nullable();
+            $table->string('incident_id', 16)->nullable();
+            $table->foreign('incident_id')->references('incident_id')->on('incidents')->nullOnDelete();
             $table->timestamps();
         });
     }
