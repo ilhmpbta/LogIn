@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('rule_id', 20);
             $table->string('name', 100);
             $table->enum('severity', ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
-            $table->string('log_type', 50);
+            $table->string('event_type', 50);
+            $table->enum('log_type', ['auth_log', 'network_log', 'system_log', 'application_log', 'firewall_log', 'unknown']);
             $table->integer('threshold');
             $table->integer('window_seconds');
             $table->boolean('is_active');
