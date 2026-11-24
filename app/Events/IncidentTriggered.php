@@ -2,11 +2,9 @@
 
 namespace App\Events;
 
-use App\Models\Incident;
+use App\DataObjects\IncidentTriggeredDataDTO;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\PublicChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -20,7 +18,7 @@ class IncidentTriggered implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public Incident $data
+        public IncidentTriggeredDataDTO $data
     ) {}
 
     public bool $afterCommit = true;

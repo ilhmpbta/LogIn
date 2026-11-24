@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Supports\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 

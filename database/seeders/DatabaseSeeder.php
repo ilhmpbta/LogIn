@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(RuleSeeder::class);
+
         User::updateOrCreate(
             ['email' => 'soc@login.test'],
             [

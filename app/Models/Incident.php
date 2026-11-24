@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Incident extends Model
 {
+    protected $fillable = [
+        'incident_id',
+        'title',
+        'severity',
+        'status',
+        'target_server',
+        'attacker_ip',
+        'triggered_rule_id',
+        'log_count_in_window',
+        'first_seen',
+        'last_seen',
+        'logs_summary',
+    ];
+
     protected $primaryKey = 'incident_id';
 
     protected $keyType = 'string';

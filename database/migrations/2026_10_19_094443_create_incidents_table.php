@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('incidents', function (Blueprint $table) {
             // $table->id();
-            $table->string('incident_id', 16)->primary();
+            $table->string('incident_id', 32)->primary();
             $table->string('title', 100);
             $table->enum('severity', ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
             $table->enum('status', ['NEW', 'ANALYZING', 'MITIGATING', 'MITIGATED', 'RESOLVED', 'FALSE_POSITIVE']);
@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('attacker_ip', 45);
             $table->string('triggered_rule_id', 16);
             $table->integer('log_count_in_window');
-            $table->string('first_seen', 19);
-            $table->string('last_seen', 19);
+            $table->string('first_seen', 32);
+            $table->string('last_seen', 32);
             $table->json('logs_summary');
             $table->timestamps();
         });
